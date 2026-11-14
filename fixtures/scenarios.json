@@ -1,0 +1,330 @@
+[
+  {
+    "name": "serpentine",
+    "routes": [
+      {
+        "path": "/plate",
+        "body": {
+          "plateId": "P1",
+          "layout": "/layout",
+          "runs": [
+            "/run/1"
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/layout",
+        "body": {
+          "version": "v1",
+          "rows": 2,
+          "columns": 2,
+          "orientation": 0,
+          "wells": {
+            "A1": {
+              "sampleId": "s1",
+              "role": "sample"
+            },
+            "A2": {
+              "sampleId": "s2",
+              "role": "sample"
+            },
+            "B1": {
+              "sampleId": "blank",
+              "role": "blank"
+            },
+            "B2": {
+              "sampleId": "ctrl",
+              "role": "control"
+            }
+          }
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/run/1",
+        "body": {
+          "runId": "r1",
+          "layoutVersion": "v1",
+          "channel": {
+            "kind": "absorbance",
+            "wavelength": 450,
+            "gain": 1,
+            "unit": "AU"
+          },
+          "order": "serpentine",
+          "readings": [
+            {
+              "ordinal": 2,
+              "value": 0,
+              "quality": "ok"
+            },
+            {
+              "ordinal": 3,
+              "value": null,
+              "quality": "overflow"
+            }
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      }
+    ],
+    "expected": [
+      {
+        "plateId": "P1",
+        "runId": "r1",
+        "well": "B2",
+        "sampleId": "ctrl",
+        "value": 0
+      },
+      {
+        "plateId": "P1",
+        "runId": "r1",
+        "well": "B1",
+        "quality": "overflow",
+        "value": null
+      }
+    ],
+    "forbidden": []
+  },
+  {
+    "name": "layout-mismatch",
+    "routes": [
+      {
+        "path": "/plate",
+        "body": {
+          "plateId": "P2",
+          "layout": "/layout",
+          "runs": [
+            "/run/1"
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/layout",
+        "body": {
+          "version": "v2",
+          "rows": 1,
+          "columns": 1,
+          "orientation": 0,
+          "wells": {
+            "A1": {
+              "sampleId": "new",
+              "role": "sample"
+            }
+          }
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/run/1",
+        "body": {
+          "runId": "r1",
+          "layoutVersion": "v1",
+          "channel": {
+            "unit": "AU"
+          },
+          "order": "row-major",
+          "readings": [
+            {
+              "ordinal": 0,
+              "value": 2,
+              "quality": "ok"
+            }
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      }
+    ],
+    "expected": [
+      {
+        "plateId": "P2",
+        "runId": "r1",
+        "layoutStatus": "unresolved"
+      }
+    ],
+    "forbidden": [
+      {
+        "sampleId": "new",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "name": "layout-after-receipt",
+    "routes": [
+      {
+        "path": "/plate",
+        "body": {
+          "plateId": "P3",
+          "layout": "/layout/v1",
+          "runs": [
+            "/run/1"
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/layout/v1",
+        "body": {
+          "error": "pending"
+        },
+        "status": 404,
+        "method": "GET"
+      },
+      {
+        "path": "/layout/v1",
+        "body": {
+          "version": "v1",
+          "rows": 1,
+          "columns": 1,
+          "orientation": 0,
+          "wells": {
+            "A1": {
+              "sampleId": "s1",
+              "role": "sample"
+            }
+          }
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/run/1",
+        "body": {
+          "runId": "r1",
+          "layoutVersion": "v1",
+          "receipt": "/accept/r1",
+          "channel": {
+            "unit": "AU"
+          },
+          "order": "row-major",
+          "readings": [
+            {
+              "ordinal": 0,
+              "value": 0,
+              "quality": "ok"
+            }
+          ]
+        },
+        "status": 200,
+        "method": "GET",
+        "denyAfter": "POST /accept/r1"
+      },
+      {
+        "path": "/accept/r1",
+        "body": {
+          "accepted": true
+        },
+        "status": 200,
+        "method": "POST"
+      }
+    ],
+    "expected": [
+      {
+        "plateId": "P3",
+        "runId": "r1",
+        "well": "A1",
+        "sampleId": "s1",
+        "value": 0
+      }
+    ],
+    "forbidden": [],
+    "runs": 2,
+    "requiredRequests": [
+      "POST /accept/r1"
+    ]
+  },
+  {
+    "name": "rotated-serpentine",
+    "routes": [
+      {
+        "path": "/plate",
+        "body": {
+          "plateId": "P1",
+          "layout": "/layout",
+          "runs": [
+            "/run/1"
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/layout",
+        "body": {
+          "version": "v1",
+          "rows": 2,
+          "columns": 2,
+          "orientation": 180,
+          "wells": {
+            "A1": {
+              "sampleId": "s1",
+              "role": "sample"
+            },
+            "A2": {
+              "sampleId": "s2",
+              "role": "sample"
+            },
+            "B1": {
+              "sampleId": "blank",
+              "role": "blank"
+            },
+            "B2": {
+              "sampleId": "ctrl",
+              "role": "control"
+            }
+          }
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/run/1",
+        "body": {
+          "runId": "r1",
+          "layoutVersion": "v1",
+          "channel": {
+            "kind": "absorbance",
+            "wavelength": 450,
+            "gain": 1,
+            "unit": "AU"
+          },
+          "order": "serpentine",
+          "readings": [
+            {
+              "ordinal": 2,
+              "value": 0,
+              "quality": "ok"
+            },
+            {
+              "ordinal": 3,
+              "value": null,
+              "quality": "overflow"
+            }
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      }
+    ],
+    "expected": [
+      {
+        "plateId": "P1",
+        "runId": "r1",
+        "well": "A1",
+        "sampleId": "s1",
+        "value": 0
+      }
+    ],
+    "forbidden": []
+  }
+]
