@@ -326,5 +326,508 @@
       }
     ],
     "forbidden": []
+  },
+  {
+    "name": "fluorescence-retest",
+    "routes": [
+      {
+        "path": "/plate",
+        "body": {
+          "plateId": "P5",
+          "layout": "/layout",
+          "runs": [
+            "/run/1"
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/layout",
+        "body": {
+          "version": "v3",
+          "rows": 1,
+          "columns": 2,
+          "orientation": 0,
+          "wells": {
+            "A1": {
+              "sampleId": "s1",
+              "role": "sample"
+            },
+            "A2": {
+              "sampleId": "s2",
+              "role": "sample"
+            }
+          }
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/run/1",
+        "body": {
+          "runId": "r1",
+          "layoutVersion": "v3",
+          "channel": {
+            "kind": "fluorescence",
+            "wavelength": 485,
+            "gain": 40,
+            "unit": "RFU"
+          },
+          "order": "row-major",
+          "readings": [
+            {
+              "ordinal": 0,
+              "value": 12.5,
+              "quality": "ok"
+            },
+            {
+              "ordinal": 1,
+              "value": 9.75,
+              "quality": "retest"
+            }
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      }
+    ],
+    "expected": [
+      {
+        "plateId": "P5",
+        "runId": "r1",
+        "well": "A1",
+        "sampleId": "s1",
+        "value": 12.5,
+        "quality": "ok",
+        "channel": {
+          "kind": "fluorescence",
+          "wavelength": 485,
+          "gain": 40,
+          "unit": "RFU"
+        }
+      },
+      {
+        "plateId": "P5",
+        "runId": "r1",
+        "well": "A2",
+        "sampleId": "s2",
+        "value": 9.75,
+        "quality": "retest"
+      }
+    ],
+    "forbidden": [],
+    "complete": true
+  },
+  {
+    "name": "layout-correction",
+    "routes": [
+      {
+        "path": "/plate",
+        "body": {
+          "plateId": "P6",
+          "layout": "/layout",
+          "runs": [
+            "/run/1"
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/layout",
+        "body": {
+          "version": "v1",
+          "rows": 1,
+          "columns": 1,
+          "orientation": 0,
+          "wells": {
+            "A1": {
+              "sampleId": "s1",
+              "role": "sample"
+            }
+          }
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/layout",
+        "body": {
+          "version": "v1",
+          "rows": 1,
+          "columns": 1,
+          "orientation": 0,
+          "wells": {
+            "A1": {
+              "sampleId": "s9",
+              "role": "sample"
+            }
+          }
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/run/1",
+        "body": {
+          "runId": "r1",
+          "layoutVersion": "v1",
+          "channel": {
+            "unit": "AU"
+          },
+          "order": "row-major",
+          "readings": [
+            {
+              "ordinal": 0,
+              "value": 3,
+              "quality": "ok"
+            }
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      }
+    ],
+    "expected": [
+      {
+        "plateId": "P6",
+        "runId": "r1",
+        "well": "A1",
+        "sampleId": "s9",
+        "value": 3
+      }
+    ],
+    "forbidden": [
+      {
+        "sampleId": "s1"
+      }
+    ],
+    "runs": 2,
+    "complete": true
+  },
+  {
+    "name": "missing-well",
+    "routes": [
+      {
+        "path": "/plate",
+        "body": {
+          "plateId": "P7",
+          "layout": "/layout",
+          "runs": [
+            "/run/1"
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/layout",
+        "body": {
+          "version": "v1",
+          "rows": 1,
+          "columns": 2,
+          "orientation": 0,
+          "wells": {
+            "A1": {
+              "sampleId": "s1",
+              "role": "sample"
+            }
+          }
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/run/1",
+        "body": {
+          "runId": "r1",
+          "layoutVersion": "v1",
+          "channel": {
+            "unit": "AU"
+          },
+          "order": "row-major",
+          "readings": [
+            {
+              "ordinal": 0,
+              "value": 1,
+              "quality": "ok"
+            },
+            {
+              "ordinal": 1,
+              "value": 2,
+              "quality": "ok"
+            }
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      }
+    ],
+    "expected": [
+      {
+        "plateId": "P7",
+        "runId": "r1",
+        "well": "A1",
+        "sampleId": "s1",
+        "value": 1
+      },
+      {
+        "plateId": "P7",
+        "runId": "r1",
+        "well": "A2",
+        "sampleId": null,
+        "value": 2
+      }
+    ],
+    "forbidden": [],
+    "complete": false
+  },
+  {
+    "name": "two-runs-one-pending",
+    "routes": [
+      {
+        "path": "/plate",
+        "body": {
+          "plateId": "P4",
+          "layout": "/layout",
+          "runs": [
+            "/run/1",
+            "/run/2"
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/layout",
+        "body": {
+          "version": "v1",
+          "rows": 1,
+          "columns": 1,
+          "orientation": 0,
+          "wells": {
+            "A1": {
+              "sampleId": "s1",
+              "role": "sample"
+            }
+          }
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/run/1",
+        "body": {
+          "runId": "r1",
+          "layoutVersion": "v1",
+          "channel": {
+            "unit": "AU"
+          },
+          "order": "row-major",
+          "readings": [
+            {
+              "ordinal": 0,
+              "value": 5,
+              "quality": "ok"
+            }
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/run/2",
+        "body": {
+          "runId": "r2",
+          "layoutVersion": "v2",
+          "channel": {
+            "unit": "AU"
+          },
+          "order": "row-major",
+          "readings": [
+            {
+              "ordinal": 0,
+              "value": 7,
+              "quality": "ok"
+            }
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      }
+    ],
+    "expected": [
+      {
+        "plateId": "P4",
+        "runId": "r1",
+        "well": "A1",
+        "sampleId": "s1",
+        "value": 5
+      },
+      {
+        "plateId": "P4",
+        "runId": "r2",
+        "layoutStatus": "unresolved"
+      }
+    ],
+    "forbidden": [
+      {
+        "runId": "r2",
+        "value": 7
+      },
+      {
+        "runId": "r2",
+        "sampleId": "s1"
+      }
+    ],
+    "complete": false
+  },
+  {
+    "name": "layout-outage",
+    "routes": [
+      {
+        "path": "/plate",
+        "body": {
+          "plateId": "P8",
+          "layout": "/layout",
+          "runs": [
+            "/run/1"
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/layout",
+        "body": {
+          "version": "v1",
+          "rows": 1,
+          "columns": 1,
+          "orientation": 0,
+          "wells": {
+            "A1": {
+              "sampleId": "s1",
+              "role": "sample"
+            }
+          }
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/layout",
+        "body": {
+          "error": "backend down"
+        },
+        "status": 500,
+        "method": "GET"
+      },
+      {
+        "path": "/run/1",
+        "body": {
+          "runId": "r1",
+          "layoutVersion": "v1",
+          "channel": {
+            "unit": "AU"
+          },
+          "order": "row-major",
+          "readings": [
+            {
+              "ordinal": 0,
+              "value": 4,
+              "quality": "ok"
+            }
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      }
+    ],
+    "expected": [
+      {
+        "plateId": "P8",
+        "runId": "r1",
+        "well": "A1",
+        "sampleId": "s1",
+        "value": 4
+      }
+    ],
+    "forbidden": [],
+    "runs": 2,
+    "complete": false
+  },
+  {
+    "name": "ordinal-out-of-range",
+    "routes": [
+      {
+        "path": "/plate",
+        "body": {
+          "plateId": "P9",
+          "layout": "/layout",
+          "runs": [
+            "/run/1"
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/layout",
+        "body": {
+          "version": "v1",
+          "rows": 1,
+          "columns": 1,
+          "orientation": 0,
+          "wells": {
+            "A1": {
+              "sampleId": "s1",
+              "role": "sample"
+            }
+          }
+        },
+        "status": 200,
+        "method": "GET"
+      },
+      {
+        "path": "/run/1",
+        "body": {
+          "runId": "r1",
+          "layoutVersion": "v1",
+          "channel": {
+            "unit": "AU"
+          },
+          "order": "row-major",
+          "readings": [
+            {
+              "ordinal": 0,
+              "value": 1,
+              "quality": "ok"
+            },
+            {
+              "ordinal": 5,
+              "value": 9,
+              "quality": "ok"
+            }
+          ]
+        },
+        "status": 200,
+        "method": "GET"
+      }
+    ],
+    "expected": [
+      {
+        "plateId": "P9",
+        "runId": "r1",
+        "well": "A1",
+        "value": 1
+      }
+    ],
+    "forbidden": [
+      {
+        "value": 9
+      }
+    ],
+    "complete": false
   }
 ]

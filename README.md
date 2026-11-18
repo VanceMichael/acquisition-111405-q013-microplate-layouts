@@ -1,6 +1,6 @@
 # 微孔板读数的布局与测次资料接收
 
-这是资料接收服务的独立工作副本。当前版本支持人工摘要的领取、原文归档、重复导入和归档检查；新来源的业务行为尚未接入。
+这是资料接收服务的独立工作副本。当前版本支持人工摘要的领取、原文归档、重复导入和归档检查；同时接入微孔板测次来源：测次原文先耐久落库再向仪器确认回执，布局按测次申报的确切版本关联，缺失时明确待确认而不借用其他版本样本。
 
 ## 环境
 
@@ -13,7 +13,7 @@ npm run demo
 
 `npm test` 是初始产品的基线回归，验证现有摘要通路、原文摘要检查、本地来源响应，以及 CLI 在独立进程中的真实领取、重复导入和持久归档检查。该产品是一次执行后退出的采集程序，不提供常驻 HTTP 应用；`npm run collect` 执行领取，`npm run provider` 仅单独启动测试来源。
 
-`npm run acceptance:source` 执行 `test/feature.test.mjs` 中完整的新来源验收。此命令在初始版本会以非零状态退出，原因是新的 source 模式尚待开发，不是环境故障，也不属于已有产品基线。验收文件及断言原样保留，没有跳过、删除或把失败转为成功。交付时需执行 `npm run verify:complete`，让基线和新来源验收同时通过；不能只用基线成功说明新功能已完成。
+`npm run acceptance:source` 执行 `test/feature.test.mjs` 中完整的新来源验收；`npm run acceptance:boundary` 执行 `test/source-boundary.test.mjs` 中补充的边界回归（重启续关联、布局修正历史、确切版本匹配、通道与标记保留等）。交付时需执行 `npm run verify:complete`，让基线、新来源验收与边界回归同时通过；不能只用基线成功说明新功能已完成。
 
 ```sh
 npm run verify:complete
@@ -30,11 +30,12 @@ docker run --rm --network none acquisition-microplate-layouts:local
 docker run --rm --network none acquisition-microplate-layouts:local npm run demo:feature
 ```
 
-镜像固定 Node.js 版本及基础镜像摘要；首次构建可提前拉取基础镜像，正式运行不安装或下载。容器中来源与采集器同进程启动，不需要第二个容器。默认容器命令跑现有测试与实际摘要导入，不将未开发功能伪装成成功。
+镜像固定 Node.js 版本及基础镜像摘要；首次构建可提前拉取基础镜像，正式运行不安装或下载。容器中来源与采集器同进程启动，不需要第二个容器。默认容器命令跑基线回归与实际摘要导入。
 
 ## 工作入口
 
-- `src/collector.mjs` 的 `collect` 是业务入口；既有 `legacy` 模式要保留。
+- `src/collector.mjs` 的 `collect` 是业务入口；既有 `legacy` 模式要保留，`source` 模式接入微孔板测次新来源。
+- `src/source.mjs` 实现 source 模式：测次原文耐久接收与回执确认、按确切布局版本解释蛇形扫描顺序与板朝向、通道参数与质量标记保留、缺布局时输出待确认。
 - `src/transport.mjs` 提供原文字节与请求证据，错误状态由业务层判断。
 - `src/archive.mjs` 支持内容寻址原文与记录修订，存储位置由调用方传入。
 - `provider/server.mjs` 提供允许访问的本地合成来源，路径和例子见 `docs/source-contract.md`。
